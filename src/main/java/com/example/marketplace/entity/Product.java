@@ -28,6 +28,14 @@ public class Product {
     @Column(nullable = false)
     private String city;
 
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
     private Long previewImageId;
 
     private LocalDateTime createdAt;
@@ -101,7 +109,7 @@ public class Product {
         this.images = images;
     }
 
-    public Product(Long id, String title, String description, BigDecimal price, Long previewImageId, LocalDateTime createdAt, List<Image> images) {
+    public Product(Long id, String title, String description, BigDecimal price, Long previewImageId, LocalDateTime createdAt, List<Image> images, String city) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -109,6 +117,7 @@ public class Product {
         this.previewImageId = previewImageId;
         this.createdAt = createdAt;
         this.images = images;
+        this.city = city;
     }
 
     public Product() {}

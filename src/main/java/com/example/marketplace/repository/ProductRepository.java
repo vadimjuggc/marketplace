@@ -8,9 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    List<Product> findByTitleContainingIgnoreCase(String title);
     List<Product> findByCityIgnoreCase(String city);
-    List<Product> findByTitleContainingIgnoreCaseAndCityIgnoreCase(String title, String city);
 
     @Query("SELECT p FROM Product p WHERE " +
             "LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

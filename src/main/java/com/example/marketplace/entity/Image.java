@@ -17,8 +17,7 @@ public class Image {
     private String contentType;
     private boolean isPreviewImage;
 
-    @Lob
-    @Column(name = "bytes")
+    @Column(name = "bytes", columnDefinition = "bytea")
     @JsonIgnore
     private byte[] bytes;
 
@@ -38,6 +37,10 @@ public class Image {
         this.isPreviewImage = isPreviewImage;
         this.bytes = bytes;
         this.product = product;
+    }
+
+    public String getUrl() {
+        return this.getId() != null ? "/api/images/" + this.getId() : null;
     }
 
     public void setId(Long id) {
@@ -96,6 +99,7 @@ public class Image {
         return isPreviewImage;
     }
 
+    @JsonIgnore
     public byte[] getBytes() {
         return bytes;
     }
