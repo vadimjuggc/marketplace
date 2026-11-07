@@ -2,6 +2,7 @@ package com.example.marketplace.controller;
 
 import com.example.marketplace.entity.Product;
 import com.example.marketplace.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createProduct(Product product,@RequestParam(name = "files", required = false) MultipartFile[] files) {
+    public ResponseEntity<?> createProduct(@Valid Product product, @RequestParam(name = "files", required = false) MultipartFile[] files) {
         try {
             productService.saveProduct(product, files);
             return ResponseEntity.status(HttpStatus.CREATED).build();

@@ -1,7 +1,10 @@
 package com.example.marketplace.entity;
 
 import jakarta.persistence.*;
-import org.springframework.data.annotation.Persistent;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,28 +20,31 @@ public class Product {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank(message = "Введите название")
+    @Size(min = 3, max = 100, message = "Длина должна быть от 3 до 100 символов")
     private String title;
 
     @Column(name = "text")
+    @Size(max = 2000, message = "Описание слишком длинное")
     private String description;
 
     @Column(nullable = false)
+    @NotNull(message = "Введите цену")
+    @Positive(message = "Цена должна быть больше 0")
     private BigDecimal price;
 
     @Column(nullable = false)
+    @NotBlank(message = "Введите город")
+    @Size(min = 3, max = 50, message = "Длина должна быть от 3 до 50 символов")
     private String city;
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getCity() {
-        return city;
-    }
 
     private Long previewImageId;
 
     private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @PrePersist
     private void init() {
@@ -79,6 +85,14 @@ public class Product {
 
     public List<Image> getImages() {
         return images;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCity() {
+        return city;
     }
 
     public void setId(Long id) {
