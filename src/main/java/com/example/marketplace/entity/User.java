@@ -24,7 +24,7 @@ public class User {
 
     private LocalDateTime createdAt;
 
-    private boolean active;
+    private Boolean active;
 
     @NotBlank
     private String password;
@@ -42,7 +42,7 @@ public class User {
         createdAt = LocalDateTime.now();
     }
 
-    public User(Long id, String nickName, String email, LocalDateTime createdAt, boolean active, String password, List<Product> products, Role role) {
+    public User(Long id, String nickName, String email, LocalDateTime createdAt, Boolean active, String password, List<Product> products, Role role) {
         this.id = id;
         this.nickName = nickName;
         this.email = email;
@@ -69,7 +69,7 @@ public class User {
         return createdAt;
     }
 
-    public boolean isActive() {
+    public Boolean isActive() {
         return active;
     }
 
@@ -101,7 +101,7 @@ public class User {
         this.createdAt = createdAt;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 
