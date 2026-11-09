@@ -1,4 +1,4 @@
-package com.example.marketplace.service;
+package com.example.marketplace.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

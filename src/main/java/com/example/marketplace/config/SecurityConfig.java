@@ -1,4 +1,4 @@
-package com.example.marketplace.configuration;
+package com.example.marketplace.config;
 
 import com.example.marketplace.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;

@@ -4,7 +4,7 @@ import com.example.marketplace.dto.AuthResponse;
 import com.example.marketplace.dto.LoginRequest;
 import com.example.marketplace.entity.User;
 import com.example.marketplace.exception.UserAlreadyExistsException;
-import com.example.marketplace.service.JwtService;
+import com.example.marketplace.security.JwtService;
 import com.example.marketplace.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
