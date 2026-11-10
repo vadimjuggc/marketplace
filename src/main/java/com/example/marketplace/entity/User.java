@@ -29,7 +29,7 @@ public class User {
     @NotBlank
     private String password;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "user")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "seller")
     private List<Product> products;
 
     @Enumerated(EnumType.STRING)

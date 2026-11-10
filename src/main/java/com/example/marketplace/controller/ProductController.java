@@ -1,20 +1,16 @@
 package com.example.marketplace.controller;
 
 import com.example.marketplace.dto.ProductResponse;
-import com.example.marketplace.entity.Product;
 import com.example.marketplace.service.ProductService;
-import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -28,36 +24,34 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductResponse>> listProducts(
-            @RequestParam(name = "title", required = false) String title,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
-        return ResponseEntity.ok(productService.getProducts(title, pageable));
+    public ResponseEntity<List<ProductResponse>> getAllProducts() {
+        return ResponseEntity.ok(productService.getAllProducts());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id){
-        try {
-            return ResponseEntity.ok(productService.getProductById(id));
-        }
-        catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProductById(id));
     }
 
-    @PostMapping
-    public ResponseEntity<?> createProduct(@AuthenticationPrincipal Long userId, @ModelAttribute @Valid Product product, @RequestParam(name = "files", required = false) MultipartFile[] files) {
-        try {
-            productService.saveProduct(userId, product, files);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error with creating a product: " + e.getMessage());
-        }
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductResponse> createProduct(@RequestParam("title") String title,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam("price") BigDecimal price, @RequestParam("city") String city,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @AuthenticationPrincipal Long userId) throws IOException {
+
+        ProductResponse response = productService.createProduct(title, description, price, city, image, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<ProductResponse>> getMyProducts(@AuthenticationPrincipal Long userId) {
+        return ResponseEntity.ok(productService.getMyProducts(userId));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id, @AuthenticationPrincipal Long userId) {
         productService.deleteProduct(id, userId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

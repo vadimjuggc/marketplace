@@ -24,4 +24,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> searchByKeywordAndCity(@Param("keyword") String keyword, @Param("city") String city);
 
     Page<Product> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+
+    List<Product> findByIsSoldFalseOrderByCreatedAtDesc();
+
+    List<Product> findBySeller_IdOrderByCreatedAtDesc(Long sellerId);
 }

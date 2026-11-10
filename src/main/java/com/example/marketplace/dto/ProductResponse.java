@@ -10,6 +10,7 @@ public record ProductResponse(
         BigDecimal price,
         String city,
         Long previewImageId,
-        String sellerNickname,
-        LocalDateTime dateOfCreated
+        boolean isSold,
+        String sellerNickName,
+        LocalDateTime createdAt
 ) {}

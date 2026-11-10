@@ -4,16 +4,16 @@ import com.example.marketplace.dto.ProductResponse;
 import com.example.marketplace.entity.Image;
 import com.example.marketplace.entity.Product;
 import com.example.marketplace.entity.User;
+import com.example.marketplace.exception.ResourceNotFoundException;
+import com.example.marketplace.repository.ImageRepository;
 import com.example.marketplace.repository.ProductRepository;
 import com.example.marketplace.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -21,93 +21,99 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final ImageRepository imageRepository;
 
-    public ProductService(ProductRepository productRepository, UserRepository userRepository) {
+    public ProductService(ProductRepository productRepository,
+                          UserRepository userRepository,
+                          ImageRepository imageRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.imageRepository = imageRepository;
     }
 
-    public List<Product> listProducts(String keyword, String city) {
-        boolean hasKeyword = keyword != null && !keyword.isBlank();
-        boolean hasCity = city != null && !city.isBlank();
-
-        if (hasKeyword && hasCity) {
-            return productRepository.searchByKeywordAndCity(keyword.trim(), city.trim());
-        }
-        if (hasKeyword) {
-            return productRepository.searchByKeyword(keyword.trim());
-        }
-        if (hasCity) {
-            return productRepository.findByCityIgnoreCase(city.trim());
-        }
-        return productRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getAllProducts() {
+        return productRepository.findByIsSoldFalseOrderByCreatedAtDesc()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
-    public Product getProductById(Long id) {
-        return productRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Product with id " + id + " not found"));
+    @Transactional(readOnly = true)
+    public ProductResponse getProductById(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Товар с id " + id + " не найден"));
+        return mapToResponse(product);
     }
 
     @Transactional
-    public void saveProduct(Long userId, Product product, MultipartFile... files) throws IOException {
-        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User with id " + userId + " not found"));
-        product.setUser(user);
+    public ProductResponse createProduct(String title, String description, BigDecimal price, String city,
+                                         MultipartFile file, Long userId) throws IOException {
+        User seller = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-        if (files != null) {
-            for (MultipartFile file : files) {
-                if (file != null && !file.isEmpty()) {
-                    Image image = toImageEntity(file);
-                    if (product.getImages() != null && product.getImages().isEmpty()) {
-                        image.setPreviewImage(true);
-                    }
-                    product.addImage(image);
-                }
-            }
-        }
+        Product product = new Product();
+        product.setTitle(title);
+        product.setCity(city);
+        product.setDescription(description);
+        product.setPrice(price);
+        product.setSeller(seller);
+        product.setSold(false);
 
         Product savedProduct = productRepository.save(product);
 
-        if (savedProduct.getImages() != null && !savedProduct.getImages().isEmpty()) {
-            savedProduct.setPreviewImageId(savedProduct.getImages().get(0).getId());
-            productRepository.save(savedProduct);
+        if (file != null && !file.isEmpty()) {
+            Image image = new Image();
+            image.setName(file.getName());
+            image.setOriginalFileName(file.getOriginalFilename());
+            image.setContentType(file.getContentType());
+            image.setSize(file.getSize());
+            image.setBytes(file.getBytes());
+            image.setProduct(savedProduct);
+
+            Image savedImage = imageRepository.save(image);
+            savedProduct.setPreviewImageId(savedImage.getId());
+            savedProduct = productRepository.save(savedProduct);
         }
+
+        return mapToResponse(savedProduct);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getMyProducts(Long userId) {
+        return productRepository.findBySeller_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Transactional
     public void deleteProduct(Long productId, Long userId) {
-        Product product = getProductById(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Товар не найден"));
 
-        if (product.getUser() == null || !product.getUser().getId().equals(userId)) {
-            throw new SecurityException("У вас нет прав на удаление этого товара");
-        }
-        productRepository.deleteById(productId);
-    }
-
-    private Image toImageEntity(MultipartFile file) throws IOException {
-        Image image = new Image();
-        image.setName(file.getName());
-        image.setOriginalFileName(file.getOriginalFilename());
-        image.setContentType(file.getContentType());
-        image.setSize(file.getSize());
-        image.setBytes(file.getBytes());
-        return image;
-    }
-
-    public Page<ProductResponse> getProducts(String title, Pageable pageable) {
-        Page<Product> products;
-        if (title != null && !title.isBlank()) {
-            products = productRepository.findByTitleContainingIgnoreCase(title, pageable);
-        } else {
-            products = productRepository.findAll(pageable);
+        if (!product.getSeller().getId().equals(userId)) {
+            throw new IllegalArgumentException("Вы не можете удалить чужой товар");
         }
 
-        return products.map(product -> new ProductResponse(
+        if (product.isSold()) {
+            throw new IllegalStateException("Нельзя удалить уже проданный товар");
+        }
+
+        productRepository.delete(product);
+    }
+
+    private ProductResponse mapToResponse(Product product) {
+        return new ProductResponse(
                 product.getId(),
                 product.getTitle(),
                 product.getDescription(),
                 product.getPrice(),
                 product.getCity(),
                 product.getPreviewImageId(),
-                product.getUser() != null ? product.getUser().getNickName() : "Unknown",
-                product.getCreatedAt()));
+                product.isSold(),
+                product.getSeller() != null ? product.getSeller().getNickName() : "Unknown",
+                product.getCreatedAt()
+        );
     }
 }

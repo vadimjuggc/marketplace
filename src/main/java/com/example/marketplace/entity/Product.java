@@ -1,5 +1,6 @@
 package com.example.marketplace.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,7 +25,7 @@ public class Product {
     @Size(min = 3, max = 100, message = "Длина должна быть от 3 до 100 символов")
     private String title;
 
-    @Column(name = "text")
+    @Column(name = "description", length = 2000)
     @Size(max = 2000, message = "Описание слишком длинное")
     private String description;
 
@@ -42,22 +43,36 @@ public class Product {
 
     private LocalDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private User user;
+    @Column(name = "is_sold", nullable = false)
+    private boolean isSold = false;
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", nullable = false)
+    @JsonIgnore
+    private User seller;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "product")
+    private List<Image> images = new ArrayList<>();
 
     @PrePersist
     private void init() {
         createdAt = LocalDateTime.now();
     }
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "product")
-    private List<Image> images = new ArrayList<>();
+    public Product() {}
+
+    public Product(Long id, String title, String description, BigDecimal price, Long previewImageId, LocalDateTime createdAt, List<Image> images, String city, boolean isSold, User seller) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.price = price;
+        this.previewImageId = previewImageId;
+        this.createdAt = createdAt;
+        this.images = images;
+        this.city = city;
+        this.isSold = isSold;
+        this.seller = seller;
+    }
 
     public void addImage(Image image) {
         images.add(image);
@@ -68,80 +83,79 @@ public class Product {
         return id;
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public Long getPreviewImageId() {
-        return previewImageId;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public List<Image> getImages() {
-        return images;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
     }
 
     public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public Long getPreviewImageId() {
+        return previewImageId;
+    }
+
     public void setPreviewImageId(Long previewImageId) {
         this.previewImageId = previewImageId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
+    public boolean isSold() {
+        return isSold;
+    }
+
+    public void setSold(boolean sold) {
+        this.isSold = sold;
+    }
+
+    public User getSeller() {
+        return seller;
+    }
+
+    public void setSeller(User seller) {
+        this.seller = seller;
+    }
+
+    public List<Image> getImages() {
+        return images;
+    }
+
     public void setImages(List<Image> images) {
         this.images = images;
     }
-
-    public Product(Long id, String title, String description, BigDecimal price, Long previewImageId, LocalDateTime createdAt, List<Image> images, String city) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.price = price;
-        this.previewImageId = previewImageId;
-        this.createdAt = createdAt;
-        this.images = images;
-        this.city = city;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public Product() {}
 }

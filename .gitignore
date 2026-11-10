@@ -1,8 +1,27 @@
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+### Local Environment & Secrets ###
+.env
+*.env
+application-local.properties
+application-local.yml
+application-test.properties
+application-test.yml
+src/main/resources/application-local.properties
+src/main/resources/application-local.yml
+src/test/resources/application-test.properties
+src/test/resources/application-test.yml
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
 
 ### STS ###
 .apt_generated
@@ -12,12 +31,6 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
 
 ### NetBeans ###
 /nbproject/private/
@@ -31,3 +44,17 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Logs & DB Tools ###
+*.log
+logs/
+*.sql.gz
+
+### OS generated files ###
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

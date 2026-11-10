@@ -30,6 +30,7 @@ public class Order {
 
     private LocalDateTime createdAt;
 
+    @PrePersist
     private void init() {
         createdAt = LocalDateTime.now();
         if(status == null) {
