@@ -1,0 +1,15 @@
+package com.example.marketplace.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+public record ProductResponse(
+        Long id,
+        String title,
+        String description,
+        BigDecimal price,
+        String city,
+        Long previewImageId,
+        String sellerNickname,
+        LocalDateTime dateOfCreated
+) {}

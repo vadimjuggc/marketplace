@@ -44,7 +44,12 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private User user;
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 
     @PrePersist
     private void init() {
@@ -132,6 +137,10 @@ public class Product {
         this.createdAt = createdAt;
         this.images = images;
         this.city = city;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public Product() {}

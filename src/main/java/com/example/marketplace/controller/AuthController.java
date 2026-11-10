@@ -2,6 +2,8 @@ package com.example.marketplace.controller;
 
 import com.example.marketplace.dto.AuthResponse;
 import com.example.marketplace.dto.LoginRequest;
+import com.example.marketplace.dto.RegisterRequest;
+import com.example.marketplace.entity.Role;
 import com.example.marketplace.entity.User;
 import com.example.marketplace.exception.UserAlreadyExistsException;
 import com.example.marketplace.security.JwtService;
@@ -28,12 +30,18 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> createUser(@RequestBody User user) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody RegisterRequest request) {
         try {
+            User user = new User();
+            user.setNickName(request.nickName());
+            user.setEmail(request.email());
+            user.setPassword(request.password());
+            user.setActive(true);
+            user.setRole(Role.ROLE_USER);
+
             userService.createUser(user);
             return ResponseEntity.status(HttpStatus.CREATED).build();
-        }
-        catch (UserAlreadyExistsException e) {
+        } catch (UserAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
         }
     }

@@ -1,8 +1,6 @@
 package com.example.marketplace.exception;
 
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,4 +32,15 @@ public class GlobalExceptionHandler {
         return Map.of("message", e.getMessage());
     }
 
+    @ExceptionHandler(SecurityException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public Map<String, String> handleSecurityException(SecurityException e) {
+        return Map.of("message", e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return Map.of("message", e.getMessage());
+    }
 }

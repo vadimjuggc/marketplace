@@ -1,6 +1,8 @@
 package com.example.marketplace.repository;
 
 import com.example.marketplace.entity.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,4 +23,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "LOWER(p.city) = LOWER(:city)")
     List<Product> searchByKeywordAndCity(@Param("keyword") String keyword, @Param("city") String city);
 
+    Page<Product> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 }
