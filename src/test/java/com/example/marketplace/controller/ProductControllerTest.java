@@ -36,18 +36,39 @@ class ProductControllerTest {
     private ProductService productService;
 
     @Test
-    @DisplayName("GET /api/products возвращает список товаров")
+    @DisplayName("GET /api/products возвращает список товаров без параметров")
     void getAllProducts_ReturnsList() throws Exception {
         ProductResponse item = new ProductResponse(
                 1L, "Test Title", "Test Desc", new BigDecimal("100.00"),
-                "Minsk", 10L,false, null, LocalDateTime.now()
+                "Minsk", 10L, List.of(10L), false, "seller_nick", LocalDateTime.now()
         );
-        when(productService.getAllProducts()).thenReturn(List.of(item));
+
+        when(productService.getAllProducts(null, null)).thenReturn(List.of(item));
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value("Test Title"))
-                .andExpect(jsonPath("$[0].city").value("Minsk"));
+                .andExpect(jsonPath("$[0].city").value("Minsk"))
+                .andExpect(jsonPath("$[0].imageIds[0]").value(10L));
+    }
+
+    @Test
+    @DisplayName("GET /api/products с параметрами keyword и city фильтрует товары")
+    void getAllProducts_WithParams_ReturnsFilteredList() throws Exception {
+        ProductResponse item = new ProductResponse(
+                2L, "Archive Bomber", "Rare jacket", new BigDecimal("300.00"),
+                "Гродно", 12L, List.of(12L), false, "seller_nick", LocalDateTime.now()
+        );
+
+        when(productService.getAllProducts(eq("bomber"), eq("Гродно")))
+                .thenReturn(List.of(item));
+
+        mockMvc.perform(get("/api/products")
+                        .param("keyword", "bomber")
+                        .param("city", "Гродно"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Archive Bomber"))
+                .andExpect(jsonPath("$[0].city").value("Гродно"));
     }
 
     @Test
@@ -56,7 +77,7 @@ class ProductControllerTest {
     void createProduct_Success() throws Exception {
         ProductResponse response = new ProductResponse(
                 1L, "Bomber Jacket", "Nice jacket", new BigDecimal("250.00"),
-                "Minsk", null, false , null, LocalDateTime.now());
+                "Minsk", null, List.of(), false, "seller_nick", LocalDateTime.now());
 
         when(productService.createProduct(
                 eq("Bomber Jacket"), eq("Nice jacket"), eq(new BigDecimal("250.00")),

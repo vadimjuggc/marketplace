@@ -32,8 +32,8 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAllProducts() {
-        return productRepository.findByIsSoldFalseOrderByCreatedAtDesc()
+    public List<ProductResponse> getAllProducts(String keyword, String city) {
+        return productRepository.searchProducts(keyword, city)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
@@ -48,7 +48,7 @@ public class ProductService {
 
     @Transactional
     public ProductResponse createProduct(String title, String description, BigDecimal price, String city,
-                                         MultipartFile file, Long userId) throws IOException {
+                                         List<MultipartFile> files, Long userId) throws IOException {
         User seller = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
@@ -62,17 +62,26 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
 
-        if (file != null && !file.isEmpty()) {
-            Image image = new Image();
-            image.setName(file.getName());
-            image.setOriginalFileName(file.getOriginalFilename());
-            image.setContentType(file.getContentType());
-            image.setSize(file.getSize());
-            image.setBytes(file.getBytes());
-            image.setProduct(savedProduct);
+        if (files != null && !files.isEmpty()) {
+            boolean isFirst = true;
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
 
-            Image savedImage = imageRepository.save(image);
-            savedProduct.setPreviewImageId(savedImage.getId());
+                Image image = new Image();
+                image.setName(file.getName());
+                image.setOriginalFileName(file.getOriginalFilename());
+                image.setContentType(file.getContentType());
+                image.setSize(file.getSize());
+                image.setBytes(file.getBytes());
+                image.setProduct(savedProduct);
+
+                Image savedImage = imageRepository.save(image);
+
+                if (isFirst) {
+                    savedProduct.setPreviewImageId(savedImage.getId());
+                    isFirst = false;
+                }
+            }
             savedProduct = productRepository.save(savedProduct);
         }
 
@@ -92,7 +101,7 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Товар не найден"));
 
-        if (!product.getSeller().getId().equals(userId)) {
+        if (product.getSeller() == null || !product.getSeller().getId().equals(userId)) {
             throw new IllegalArgumentException("Вы не можете удалить чужой товар");
         }
 
@@ -104,6 +113,11 @@ public class ProductService {
     }
 
     private ProductResponse mapToResponse(Product product) {
+        List<Long> imageIds = imageRepository.findByProduct_Id(product.getId())
+                .stream()
+                .map(Image::getId)
+                .toList();
+
         return new ProductResponse(
                 product.getId(),
                 product.getTitle(),
@@ -111,6 +125,7 @@ public class ProductService {
                 product.getPrice(),
                 product.getCity(),
                 product.getPreviewImageId(),
+                imageIds,
                 product.isSold(),
                 product.getSeller() != null ? product.getSeller().getNickName() : "Unknown",
                 product.getCreatedAt()

@@ -1,40 +1,72 @@
+import { MapPin, User } from 'lucide-react';
 import { imageApi } from '../api/endpoints';
 
-export default function ProductCard({ product, onClick }) {
-    const imageUrl = product.previewImageId
+const NO_PHOTO =
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'><rect width='100%' height='100%' fill='%2318181b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2371717a' font-family='sans-serif' font-size='14'>НЕТ ФОТО</text></svg>";
+
+export default function ProductCard({ product, onClick, onSellerClick }) {
+    const photo = product.previewImageId
         ? imageApi.getUrl(product.previewImageId)
-        : 'https://placehold.co/400x400/18181b/ffffff?text=No+Photo';
+        : NO_PHOTO;
+
+    const isSold = product.sold ?? product.isSold;
+
+    const handleSellerBadgeClick = (e) => {
+        if (product.sellerNickName && onSellerClick) {
+            e.stopPropagation();
+            onSellerClick(product.sellerNickName);
+        }
+    };
 
     return (
         <div
             onClick={onClick}
-            className={`group cursor-pointer rounded-2xl border border-zinc-800 bg-zinc-900/60 overflow-hidden hover:border-zinc-600 transition flex flex-col ${
-                product.sold ? 'opacity-50' : ''
-            }`}
+            className="group relative flex flex-col justify-between border border-zinc-900 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-zinc-800 rounded-2xl overflow-hidden p-3 transition duration-200 cursor-pointer"
         >
-            <div className="relative aspect-square w-full overflow-hidden bg-zinc-950">
+            <div className="aspect-square w-full rounded-xl overflow-hidden bg-black mb-3 relative">
                 <img
-                    src={imageUrl}
+                    src={photo}
                     alt={product.title}
-                    className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                    onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = NO_PHOTO;
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300 ease-out"
                 />
-                {product.sold && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <span className="border border-white/40 bg-zinc-900/80 px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider text-white">
+
+                {isSold && (
+                    <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px] flex items-center justify-center">
+            <span className="text-xs font-medium text-zinc-300 bg-zinc-900/90 border border-zinc-800 px-2.5 py-1 rounded-md">
               Продано
             </span>
                     </div>
                 )}
             </div>
 
-            <div className="p-4 flex flex-col flex-1 justify-between">
-                <div>
-                    <div className="text-lg font-bold text-white tracking-tight">{product.price} BYN</div>
-                    <div className="mt-1 text-sm text-zinc-300 line-clamp-1 font-medium">{product.title}</div>
+            <div className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="text-sm font-medium text-zinc-200 group-hover:text-white truncate tracking-normal">
+                        {product.title}
+                    </h3>
+                    <span className="text-sm font-semibold text-white whitespace-nowrap tracking-normal">
+            {product.price} BYN
+          </span>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-xs text-zinc-500 border-t border-zinc-800/80 pt-3">
-                    <span>{product.city}</span>
-                    <span>{new Date(product.createdAt).toLocaleDateString()}</span>
+
+                <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
+                    <div className="flex items-center gap-1 truncate">
+                        <MapPin size={13} className="text-zinc-500 flex-shrink-0" />
+                        <span className="truncate">{product.city}</span>
+                    </div>
+
+                    <div
+                        onClick={handleSellerBadgeClick}
+                        className="flex items-center gap-1 flex-shrink-0 ml-2 hover:text-white transition cursor-pointer"
+                        title="Профиль продавца"
+                    >
+                        <User size={13} className="text-zinc-500" />
+                        <span className="truncate">@{product.sellerNickName || 'seller'}</span>
+                    </div>
                 </div>
             </div>
         </div>

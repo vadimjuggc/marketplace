@@ -24,8 +24,10 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<List<ProductResponse>> getAllProducts(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "city", required = false) String city) {
+        return ResponseEntity.ok(productService.getAllProducts(keyword, city));
     }
 
     @GetMapping("/{id}")
@@ -34,13 +36,19 @@ public class ProductController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductResponse> createProduct(@RequestParam("title") String title,
+    public ResponseEntity<ProductResponse> createProduct(
+            @RequestParam("title") String title,
             @RequestParam(value = "description", required = false) String description,
-            @RequestParam("price") BigDecimal price, @RequestParam("city") String city,
-            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam("price") BigDecimal price,
+            @RequestParam("city") String city,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal Long userId) throws IOException {
 
-        ProductResponse response = productService.createProduct(title, description, price, city, image, userId);
+        if (images != null && images.size() > 5) {
+            throw new IllegalArgumentException("Максимальное количество фотографий — 5");
+        }
+
+        ProductResponse response = productService.createProduct(title, description, price, city, images, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
