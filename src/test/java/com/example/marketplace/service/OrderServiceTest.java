@@ -59,7 +59,7 @@ class OrderServiceTest {
         CreateOrderRequest request = new CreateOrderRequest(productId);
 
         when(userRepository.findById(buyerId)).thenReturn(Optional.of(buyer));
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(product));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         OrderResponse response = orderService.createOrder(request, buyerId);
@@ -85,7 +85,7 @@ class OrderServiceTest {
 
         CreateOrderRequest request = new CreateOrderRequest(productId);
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(product));
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -112,7 +112,7 @@ class OrderServiceTest {
 
         CreateOrderRequest request = new CreateOrderRequest(productId);
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(product));
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,

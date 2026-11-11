@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,12 +30,12 @@ class ProductRepositoryTest {
     private ProductRepository productRepository;
 
     @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
     private TestEntityManager entityManager;
 
     private User seller;
-
-    @Autowired
-    private OrderRepository orderRepository;
 
     @BeforeEach
     void setUp() {
@@ -75,27 +76,39 @@ class ProductRepositoryTest {
     }
 
     @Test
-    @DisplayName("searchByKeyword ищет подстроку и в названии, и в описании")
-    void searchByKeyword_SearchesTitleAndDescription() {
+    @DisplayName("searchProducts ищет подстроку и в названии, и в описании (без указания города)")
+    void searchProducts_SearchesTitleAndDescription() {
         createProduct("Vintage Cargo Pants", "Classic cut", new BigDecimal("150"), "Minsk", false, LocalDateTime.now());
         createProduct("Black Hoodie", "Features cargo pocket on sleeve", new BigDecimal("90"), "Brest", false, LocalDateTime.now());
         createProduct("Leather Belt", "Pure leather", new BigDecimal("40"), "Minsk", false, LocalDateTime.now());
 
-        List<Product> results = productRepository.searchByKeyword("cargo");
+        List<Product> results = productRepository.searchProducts("cargo", null);
 
         assertEquals(2, results.size());
     }
 
     @Test
-    @DisplayName("searchByKeywordAndCity фильтрует совпадения по тексту и городу")
-    void searchByKeywordAndCity_FiltersBoth() {
+    @DisplayName("searchProducts фильтрует совпадения одновременно по ключевому слову и городу")
+    void searchProducts_FiltersKeywordAndCity() {
         createProduct("Vintage Cargo Pants", "Classic", new BigDecimal("150"), "Minsk", false, LocalDateTime.now());
         createProduct("Cargo Shorts", "Summer", new BigDecimal("100"), "Grodno", false, LocalDateTime.now());
 
-        List<Product> results = productRepository.searchByKeywordAndCity("cargo", "minsk");
+        List<Product> results = productRepository.searchProducts("cargo", "minsk");
 
         assertEquals(1, results.size());
         assertEquals("Vintage Cargo Pants", results.get(0).getTitle());
+    }
+
+    @Test
+    @DisplayName("searchProducts игнорирует проданные товары")
+    void searchProducts_IgnoresSoldProducts() {
+        createProduct("Active Cargo", "Desc", new BigDecimal("100"), "Minsk", false, LocalDateTime.now());
+        createProduct("Sold Cargo", "Desc", new BigDecimal("100"), "Minsk", true, LocalDateTime.now());
+
+        List<Product> results = productRepository.searchProducts("cargo", null);
+
+        assertEquals(1, results.size());
+        assertEquals("Active Cargo", results.get(0).getTitle());
     }
 
     @Test
@@ -114,11 +127,11 @@ class ProductRepositoryTest {
     }
 
     @Test
-    @DisplayName("findBySeller_IdOrderByCreatedAtDesc возвращает товары конкретного продавца с сортировкой")
+    @DisplayName("findBySeller_IdOrderByCreatedAtDesc возвращает все товары продавца (и активные, и проданные)")
     void findBySeller_IdOrderByCreatedAtDesc_FiltersBySeller() {
         LocalDateTime now = LocalDateTime.now();
         createProduct("Item 1", "Desc", new BigDecimal("50"), "Minsk", false, now.minusHours(1));
-        createProduct("Item 2", "Desc", new BigDecimal("70"), "Minsk", false, now);
+        createProduct("Item 2", "Desc", new BigDecimal("70"), "Minsk", true, now);
 
         User anotherSeller = new User();
         anotherSeller.setNickName("other_seller");
@@ -140,6 +153,30 @@ class ProductRepositoryTest {
 
         assertEquals(2, sellerProducts.size());
         assertEquals("Item 2", sellerProducts.get(0).getTitle());
+    }
+
+    @Test
+    @DisplayName("findBySeller_IdAndIsSoldFalseOrderByCreatedAtDesc возвращает только активные товары продавца")
+    void findBySeller_IdAndIsSoldFalseOrderByCreatedAtDesc_Success() {
+        LocalDateTime now = LocalDateTime.now();
+        createProduct("Active Item", "Desc", new BigDecimal("50"), "Minsk", false, now);
+        createProduct("Sold Item", "Desc", new BigDecimal("70"), "Minsk", true, now.minusHours(1));
+
+        List<Product> activeProducts = productRepository.findBySeller_IdAndIsSoldFalseOrderByCreatedAtDesc(seller.getId());
+
+        assertEquals(1, activeProducts.size());
+        assertEquals("Active Item", activeProducts.get(0).getTitle());
+    }
+
+    @Test
+    @DisplayName("findByIdForUpdate успешно находит товар по id")
+    void findByIdForUpdate_Success() {
+        Product product = createProduct("Locked Item", "Desc", new BigDecimal("120"), "Minsk", false, LocalDateTime.now());
+
+        Optional<Product> foundProduct = productRepository.findByIdForUpdate(product.getId());
+
+        assertTrue(foundProduct.isPresent());
+        assertEquals("Locked Item", foundProduct.get().getTitle());
     }
 
     @Test
