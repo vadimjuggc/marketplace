@@ -1,2 +1,6 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+marketplace-ui/** linguist-detectable=true
+marketplace-ui/src/**/*.jsx linguist-language=JavaScript
+marketplace-ui/src/**/*.js linguist-language=JavaScript
+marketplace-ui/src/**/*.css linguist-language=CSS
