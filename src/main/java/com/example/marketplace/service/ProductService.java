@@ -5,6 +5,7 @@ import com.example.marketplace.entity.Image;
 import com.example.marketplace.entity.Product;
 import com.example.marketplace.entity.User;
 import com.example.marketplace.exception.ResourceNotFoundException;
+import com.example.marketplace.mapper.ProductMapper;
 import com.example.marketplace.repository.ImageRepository;
 import com.example.marketplace.repository.ProductRepository;
 import com.example.marketplace.repository.UserRepository;
@@ -22,20 +23,23 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
+    private final ProductMapper productMapper;
 
     public ProductService(ProductRepository productRepository,
                           UserRepository userRepository,
-                          ImageRepository imageRepository) {
+                          ImageRepository imageRepository,
+                          ProductMapper productMapper) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.imageRepository = imageRepository;
+        this.productMapper = productMapper;
     }
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts(String keyword, String city) {
         return productRepository.searchProducts(keyword, city)
                 .stream()
-                .map(this::mapToResponse)
+                .map(productMapper::toResponse)
                 .toList();
     }
 
@@ -43,7 +47,7 @@ public class ProductService {
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Товар с id " + id + " не найден"));
-        return mapToResponse(product);
+        return productMapper.toResponse(product);
     }
 
     @Transactional
@@ -76,6 +80,7 @@ public class ProductService {
                 image.setProduct(savedProduct);
 
                 Image savedImage = imageRepository.save(image);
+                savedProduct.getImages().add(savedImage);
 
                 if (isFirst) {
                     savedProduct.setPreviewImageId(savedImage.getId());
@@ -85,14 +90,14 @@ public class ProductService {
             savedProduct = productRepository.save(savedProduct);
         }
 
-        return mapToResponse(savedProduct);
+        return productMapper.toResponse(savedProduct);
     }
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getMyProducts(Long userId) {
         return productRepository.findBySeller_IdOrderByCreatedAtDesc(userId)
                 .stream()
-                .map(this::mapToResponse)
+                .map(productMapper::toResponse)
                 .toList();
     }
 
@@ -110,25 +115,5 @@ public class ProductService {
         }
 
         productRepository.delete(product);
-    }
-
-    private ProductResponse mapToResponse(Product product) {
-        List<Long> imageIds = imageRepository.findByProduct_Id(product.getId())
-                .stream()
-                .map(Image::getId)
-                .toList();
-
-        return new ProductResponse(
-                product.getId(),
-                product.getTitle(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getCity(),
-                product.getPreviewImageId(),
-                imageIds,
-                product.isSold(),
-                product.getSeller() != null ? product.getSeller().getNickName() : "Unknown",
-                product.getCreatedAt()
-        );
     }
 }

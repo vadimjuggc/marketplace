@@ -2,11 +2,11 @@ package com.example.marketplace.service;
 
 import com.example.marketplace.dto.ProductResponse;
 import com.example.marketplace.dto.UserPublicResponse;
-import com.example.marketplace.entity.Product;
 import com.example.marketplace.entity.Role;
 import com.example.marketplace.entity.User;
 import com.example.marketplace.exception.ResourceNotFoundException;
 import com.example.marketplace.exception.UserAlreadyExistsException;
+import com.example.marketplace.mapper.ProductMapper;
 import com.example.marketplace.repository.ProductRepository;
 import com.example.marketplace.repository.UserRepository;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,13 +22,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final ProductMapper productMapper;
 
     public UserService(PasswordEncoder passwordEncoder,
                        UserRepository userRepository,
-                       ProductRepository productRepository) {
+                       ProductRepository productRepository,
+                       ProductMapper productMapper) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
+        this.productMapper = productMapper;
     }
 
     public void createUser(User user) {
@@ -61,7 +64,7 @@ public class UserService {
 
         List<ProductResponse> activeProducts = productRepository.findBySeller_IdAndIsSoldFalseOrderByCreatedAtDesc(seller.getId())
                 .stream()
-                .map(this::mapProductToResponse)
+                .map(productMapper::toResponse)
                 .toList();
 
         return new UserPublicResponse(
@@ -70,27 +73,6 @@ public class UserService {
                 seller.getEmail(),
                 seller.getCreatedAt(),
                 activeProducts
-        );
-    }
-
-    private ProductResponse mapProductToResponse(Product product) {
-        List<Long> imageIds = (product.getImages() != null)
-                ? product.getImages().stream().map(img -> img.getId()).toList()
-                : List.of();
-
-        Long previewId = !imageIds.isEmpty() ? imageIds.get(0) : null;
-
-        return new ProductResponse(
-                product.getId(),
-                product.getTitle(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getCity(),
-                previewId,
-                imageIds,
-                product.isSold(),
-                product.getSeller() != null ? product.getSeller().getNickName() : null,
-                product.getCreatedAt()
         );
     }
 }

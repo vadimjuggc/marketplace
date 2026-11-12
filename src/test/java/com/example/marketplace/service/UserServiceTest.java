@@ -3,6 +3,8 @@ package com.example.marketplace.service;
 import com.example.marketplace.entity.Role;
 import com.example.marketplace.entity.User;
 import com.example.marketplace.exception.UserAlreadyExistsException;
+import com.example.marketplace.mapper.ProductMapper;
+import com.example.marketplace.repository.ProductRepository;
 import com.example.marketplace.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,12 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
+    private ProductMapper productMapper;
 
     @InjectMocks
     private UserService userService;

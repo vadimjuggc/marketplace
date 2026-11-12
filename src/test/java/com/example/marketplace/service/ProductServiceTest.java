@@ -2,6 +2,7 @@ package com.example.marketplace.service;
 
 import com.example.marketplace.entity.Product;
 import com.example.marketplace.entity.User;
+import com.example.marketplace.mapper.ProductMapper;
 import com.example.marketplace.repository.ImageRepository;
 import com.example.marketplace.repository.ProductRepository;
 import com.example.marketplace.repository.UserRepository;
@@ -22,6 +23,15 @@ class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ImageRepository imageRepository;
+
+    @Mock
+    private ProductMapper productMapper;
 
     @InjectMocks
     private ProductService productService;
